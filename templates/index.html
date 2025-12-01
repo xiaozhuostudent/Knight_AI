@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>肝病智能问答系统 v2.0</title>
+    <style>
+        /* Tokyo Night 配色方案 */
+        :root {
+            --bg-primary: #1a1b26;
+            --bg-secondary: #24283b;
+            --bg-tertiary: #414868;
+            --text-primary: #c0caf5;
+            --text-secondary: #a9b1d6;
+            --text-muted: #565f89;
+            --accent-blue: #7aa2f7;
+            --accent-cyan: #7dcfff;
+            --accent-green: #9ece6a;
+            --accent-purple: #bb9af7;
+            --accent-red: #f7768e;
+            --accent-orange: #ff9e64;
+            --border-color: #3b4261;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .header-icon {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .header .version {
+            color: var(--accent-purple);
+            font-size: 0.5em;
+            font-weight: normal;
+        }
+        
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+            margin-top: 10px;
+        }
+        
+        .model-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        
+        .badge-icon {
+            width: 16px;
+            height: 16px;
+        }
+        
+        /* Chat Container */
+        .chat-wrapper {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .chat-header {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--accent-blue);
+        }
+        
+        .chat-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Messages Area */
+        .messages-container {
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--bg-primary);
+        }
+        
+        .messages-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .messages-container::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        
+        .messages-container::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message-user {
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .message-bot {
+            display: flex;
+            justify-content: flex-start;
+        }
+        
+        .message-content {
+            max-width: 75%;
+            padding: 15px 20px;
+            border-radius: 12px;
+            position: relative;
+        }
+        
+        .message-user .message-content {
+            background: var(--accent-blue);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message-bot .message-content {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 4px;
+        }
+        
+        .message-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+        
+        .meta-icon {
+            width: 14px;
+            height: 14px;
+        }
+        
+        /* Suggestions */
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .suggestion-btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            color: var(--accent-cyan);
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        
+        .suggestion-btn:hover {
+            background: var(--accent-blue);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+        
+        /* Input Area */
+        .input-area {
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .input-field {
+            flex: 1;
+            padding: 15px 20px;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .input-field:focus {
+            border-color: var(--accent-blue);
+        }
+        
+        .input-field::placeholder {
+            color: var(--text-muted);
+        }
+        
+        .send-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .send-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(122, 162, 247, 0.4);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .send-icon {
+            width: 20px;
+            height: 20px;
+        }
+        
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 15px 20px;
+            background: var(--bg-secondary);
+        }
+        
+        .quick-action-btn {
+            padding: 10px 18px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .quick-action-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+        
+        .action-icon {
+            width: 16px;
+            height: 16px;
+        }
+        
+        /* Loading */
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 15px 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            max-width: 100px;
+        }
+        
+        .typing-indicator.active {
+            display: flex;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-muted);
+            font-size: 0.9em;
+        }
+        
+        .footer-link {
+            color: var(--accent-blue);
+            text-decoration: none;
+            margin: 0 10px;
+            transition: color 0.2s;
+        }
+        
+        .footer-link:hover {
+            color: var(--accent-cyan);
+        }
+        
+        /* Smart Suggestions */
+        .smart-suggestions {
+            padding: 15px 20px;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .suggestions-title {
+            font-size: 0.85em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .suggestions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+        }
+        
+        .smart-suggestion-btn {
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.85em;
+            text-align: left;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .smart-suggestion-btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            transform: translateX(4px);
+        }
+        
+        .suggestion-icon-small {
+            width: 14px;
+            height: 14px;
+            opacity: 0.7;
+        }
+        
+        /* Enhanced Effects */
+        .glow-on-hover {
+            animation: glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 0 5px rgba(122, 162, 247, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(122, 162, 247, 0.8);
+            }
+        }
+        
+        .chat-wrapper {
+            position: relative;
+        }
+        
+        .chat-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple), var(--accent-cyan));
+            border-radius: 14px;
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.3s;
+        }
+        
+        .chat-wrapper:hover::before {
+            opacity: 0.1;
+        }
+        
+        .input-field:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(122, 162, 247, 0.1);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .messages-container {
+                height: 400px;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+            
+            .send-btn {
+                padding: 15px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <svg class="header-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C9.38 2 7.25 4.13 7.25 6.75c0 2.57 2.01 4.65 4.55 4.74v2.26H9.25c-.41 0-.75.34-.75.75s.34.75.75.75h2.55v2h-2.55c-.41 0-.75.34-.75.75s.34.75.75.75h2.55v2.25c0 .41.34.75.75.75s.75-.34.75-.75V18.5h2.55c.41 0 .75-.34.75-.75s-.34-.75-.75-.75h-2.55v-2h2.55c.41 0 .75-.34.75-.75s-.34-.75-.75-.75h-2.55v-2.26c2.54-.09 4.55-2.17 4.55-4.74 0-2.62-2.13-4.75-4.75-4.75z" fill="currentColor"/>
+                </svg>
+                肝病智能问答系统
+                <span class="version">v2.0</span>
+            </h1>
+            <p class="subtitle">基于 BERT 微调 + 知识图谱的混合智能系统</p>
+            <div class="model-badge" id="modelBadge">
+                <svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span id="modelStatus">正在加载...</span>
+            </div>
+        </div>
+        
+        <!-- Chat Container -->
+        <div class="chat-wrapper">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="chat-title">
+                    <div class="status-indicator"></div>
+                    <span>智能助手在线</span>
+                </div>
+                <div style="color: var(--text-secondary); font-size: 0.9em;">支持 7 种意图 × 6 种疾病</div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <button class="quick-action-btn" onclick="askQuestion('乙肝有什么症状？')">
+                    <svg class="action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 16V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="12" cy="8" r="1" fill="currentColor"/>
+                    </svg>
+                    症状咨询
+                </button>
+                <button class="quick-action-btn" onclick="askQuestion('脂肪肝怎么治疗？')">
+                    <svg class="action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 21H5C4.44772 21 4 20.5523 4 20V11L12 3L20 11V20C20 20.5523 19.5523 21 19 21Z" stroke="currentColor" stroke-width="2"/>
+                        <path d="M9 21V14H15V21" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    治疗方案
+                </button>
+                <button class="quick-action-btn" onclick="askQuestion('肝癌需要做什么检查？')">
+                    <svg class="action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    检查项目
+                </button>
+                <button class="quick-action-btn" onclick="askQuestion('如何预防酒精肝？')">
+                    <svg class="action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
+                        <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    预防措施
+                </button>
+                <button class="quick-action-btn" onclick="askQuestion('乙肝会传染吗？')">
+                    <svg class="action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                        <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    传染咨询
+                </button>
+            </div>
+            
+            <!-- Smart Suggestions -->
+            <div class="smart-suggestions">
+                <div class="suggestions-title">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
+                    </svg>
+                    智能建议
+                </div>
+                <div class="suggestions-grid" id="smartSuggestions">
+                    <button class="smart-suggestion-btn" onclick="askQuestion('乙肝患者日常要注意什么？')">
+                        <svg class="suggestion-icon-small" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        乙肝患者日常要注意什么？
+                    </button>
+                    <button class="smart-suggestion-btn" onclick="askQuestion('脂肪肝可以逆转吗？')">
+                        <svg class="suggestion-icon-small" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 12L9 6M9 6L3 6M9 6V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M21 12L15 18M15 18H21M15 18V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        脂肪肝可以逆转吗？
+                    </button>
+                    <button class="smart-suggestion-btn" onclick="askQuestion('肝硬化会发展成肝癌吗？')">
+                        <svg class="suggestion-icon-small" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        肝硬化会发展成肝癌吗？
+                    </button>
+                    <button class="smart-suggestion-btn" onclick="askQuestion('家人有乙肝会传染吗？')">
+                        <svg class="suggestion-icon-small" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17 21V19C17 16.7909 15.2091 15 13 15H5C2.79086 15 1 16.7909 1 19V21M13 7C13 9.20914 11.2091 11 9 11C6.79086 11 5 9.20914 5 7C5 4.79086 6.79086 3 9 3C11.2091 3 13 4.79086 13 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        家人有乙肝会传染吗？
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Messages -->
+            <div class="messages-container" id="messagesContainer">
+                <div class="message message-bot">
+                    <div>
+                        <div class="message-content">
+                            您好！我是肝病智能问答助手。<br><br>
+                            我可以回答关于以下疾病的问题：<br>
+                            • 乙肝（大三阳、小三阳）<br>
+                            • 脂肪肝<br>
+                            • 肝硬化<br>
+                            • 肝癌<br>
+                            • 丙肝<br>
+                            • 酒精肝<br><br>
+                            支持查询：症状、治疗、病因、检查、并发症、预防、就诊科室
+                        </div>
+                        <div class="message-meta">
+                            <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                                <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            <span id="currentTime"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        class="input-field" 
+                        id="questionInput" 
+                        placeholder="请输入您的问题,例如:乙肝有什么症状?"
+                        onkeypress="handleKeyPress(event)"
+                    >
+                    <button class="send-btn" id="sendBtn" onclick="sendQuestion()">
+                        <span>发送</span>
+                        <svg class="send-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>
+                肝病智能问答系统 v2.0 | 基于 BERT + 知识图谱 | 
+                仅供学习参考，不能替代专业医疗诊断
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // 更新当前时间
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('currentTime').textContent = timeStr;
+        }
+        updateTime();
+        
+        // 检查模型状态
+        async function checkModelStatus() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                document.getElementById('modelStatus').textContent = '使用规则方法';
+                
+                // 这里可以通过API返回模型类型
+                // 简化起见，暂时显示规则方法
+            } catch (error) {
+                document.getElementById('modelStatus').textContent = '连接失败';
+            }
+        }
+        checkModelStatus();
+        
+        // 发送问题
+        async function sendQuestion() {
+            const input = document.getElementById('questionInput');
+            const question = input.value.trim();
+            
+            if (!question) return;
+            
+            // 禁用输入
+            input.disabled = true;
+            document.getElementById('sendBtn').disabled = true;
+            
+            // 添加用户消息
+            addMessage(question, 'user');
+            input.value = '';
+            
+            // 显示加载指示器
+            showTypingIndicator();
+            
+            try {
+                const response = await fetch('/api/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question })
+                });
+                
+                const data = await response.json();
+                
+                // 隐藏加载指示器
+                hideTypingIndicator();
+                
+                if (data.success) {
+                    addMessage(data.answer, 'bot', {
+                        disease: data.disease,
+                        intent: data.intent_chinese,
+                        suggestions: data.suggestions,
+                        model: data.model_used || '规则'
+                    });
+                } else {
+                    addMessage(data.answer || '抱歉，出现了错误', 'bot');
+                }
+            } catch (error) {
+                hideTypingIndicator();
+                addMessage('抱歉，服务器连接失败，请稍后重试。', 'bot');
+            } finally {
+                // 恢复输入
+                input.disabled = false;
+                document.getElementById('sendBtn').disabled = false;
+                input.focus();
+            }
+        }
+        
+        // 添加消息
+        function addMessage(text, type, meta = null) {
+            const container = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${type}`;
+            
+            let metaHtml = '';
+            if (type === 'bot' && meta) {
+                let metaText = `识别疾病: ${meta.disease} | 意图: ${meta.intent} | 模型: ${meta.model}`;
+                metaHtml = `
+                    <div class="message-meta">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span>${metaText}</span>
+                    </div>
+                `;
+                
+                if (meta.suggestions && meta.suggestions.length > 0) {
+                    const suggestionsHtml = meta.suggestions.map(s => 
+                        `<button class="suggestion-btn" onclick="askQuestion('${s}')">${s}</button>`
+                    ).join('');
+                    metaHtml += `<div class="suggestions">${suggestionsHtml}</div>`;
+                }
+                
+                // 更新智能建议
+                updateSmartSuggestions(meta.disease, meta.intent);
+            }
+            
+            messageDiv.innerHTML = `
+                <div>
+                    <div class="message-content">${text.replace(/\n/g, '<br>')}</div>
+                    ${metaHtml}
+                </div>
+            `;
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // 更新智能建议
+        function updateSmartSuggestions(disease, intent) {
+            const suggestionsContainer = document.getElementById('smartSuggestions');
+            
+            // 根据当前对话生成相关建议
+            const relatedQuestions = {
+                'symptom': [
+                    `${disease}需要做什么检查？`,
+                    `${disease}怎么治疗？`,
+                    `${disease}会有并发症吗？`,
+                    `如何预防${disease}？`
+                ],
+                'treatment': [
+                    `${disease}治疗期间注意什么？`,
+                    `${disease}能治愈吗？`,
+                    `${disease}会复发吗？`,
+                    `${disease}需要长期用药吗？`
+                ],
+                'cause': [
+                    `${disease}有什么症状？`,
+                    `${disease}怎么检查？`,
+                    `如何预防${disease}？`,
+                    `${disease}会遗传吗？`
+                ],
+                'prevention': [
+                    `${disease}疫苗有用吗？`,
+                    `${disease}日常如何护理？`,
+                    `${disease}饮食要注意什么？`,
+                    `${disease}会传染家人吗？`
+                ],
+                'examination': [
+                    `${disease}检查结果怎么看？`,
+                    `${disease}多久复查一次？`,
+                    `${disease}确诊后怎么办？`,
+                    `${disease}要住院吗？`
+                ],
+                'complication': [
+                    `${disease}如何避免并发症？`,
+                    `${disease}定期检查什么？`,
+                    `${disease}严重到什么程度？`,
+                    `${disease}需要手术吗？`
+                ],
+                'department': [
+                    `${disease}就诊流程是什么？`,
+                    `${disease}需要预约吗？`,
+                    `${disease}医保能报销吗？`,
+                    `${disease}专家号怎么挂？`
+                ]
+            };
+            
+            const questions = relatedQuestions[intent] || [
+                '乙肝患者日常要注意什么？',
+                '脂肪肝可以逆转吗？',
+                '肝硬化会发展成肝癌吗？',
+                '家人有乙肝会传染吗？'
+            ];
+            
+            suggestionsContainer.innerHTML = questions.map(q => `
+                <button class="smart-suggestion-btn" onclick="askQuestion('${q}')">
+                    <svg class="suggestion-icon-small" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 5L16 12L9 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    ${q}
+                </button>
+            `).join('');
+        }
+        
+        // 显示输入指示器
+        function showTypingIndicator() {
+            const container = document.getElementById('messagesContainer');
+            const indicator = document.createElement('div');
+            indicator.className = 'message message-bot';
+            indicator.id = 'typingIndicator';
+            indicator.innerHTML = `
+                <div class="typing-indicator active">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            container.appendChild(indicator);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+        
+        // 快捷问题
+        function askQuestion(question) {
+            document.getElementById('questionInput').value = question;
+            sendQuestion();
+        }
+        
+        // 键盘事件
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendQuestion();
+            }
+        }
+        
+        // 自动聚焦输入框
+        document.getElementById('questionInput').focus();
+    </script>
+</body>
+</html>

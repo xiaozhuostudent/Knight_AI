@@ -1,0 +1,30 @@
+# System files
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Models and large files
+models/
+data/
+*.bin
+*.safetensors
+*.pth
+*.pt
+*.h5
+*.onnx
+*.ckpt
+*.zip
+*.tar.gz
+
+# Logs and databases
+*.log
+*.sqlite
