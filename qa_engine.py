@@ -232,17 +232,37 @@ class QAEngine:
         # 1. 提取疾病
         disease = self.kb.extract_disease(question)
         
+        # 如果无法直接识别疾病，尝试通过症状推断
         if not disease:
-            # 未识别到疾病
-            diseases = self.kb.get_all_diseases()
-            return {
-                'success': False,
-                'answer': f"抱歉，我没有识别出具体的疾病名称。\n\n我目前可以回答关于以下肝病的问题：\n" +
-                         "\n".join(f"• {d}" for d in diseases),
-                'disease': None,
-                'intent': None,
-                'suggestions': [f"{d}有什么症状？" for d in diseases[:3]]
-            }
+            disease = self.kb.infer_disease_by_symptoms(question)
+        
+        # 如果仍然无法识别疾病，尝试使用交互式推理系统
+        if not disease:
+            inference_result = self.kb.interactive_disease_inference(question)
+            if not inference_result["success"]:
+                # 未识别到疾病
+                diseases = self.kb.get_all_diseases()
+                return {
+                    'success': False,
+                    'answer': f"抱歉，我没有识别出具体的疾病名称。\n\n我目前可以回答关于以下肝病的问题：\n" +
+                             "\n".join(f"• {d}" for d in diseases) +
+                             "\n\n您可以描述您的症状，我会尽力帮您推断可能的疾病。",
+                    'disease': None,
+                    'intent': None,
+                    'suggestions': [f"{d}有什么症状？" for d in diseases[:3]]
+                }
+            else:
+                # 返回交互式推理结果
+                return {
+                    'success': True,
+                    'answer': inference_result["answer"],
+                    'disease': None,
+                    'intent': 'general',
+                    'intent_chinese': '症状推理',
+                    'suggestions': inference_result.get("suggestions", []),
+                    'model_used': '规则',
+                    'inference_details': inference_result
+                }
         
         # 2. 识别意图
         intent = self.predict_intent(question)

@@ -19,7 +19,9 @@ app.config['JSON_AS_ASCII'] = False  # 支持中文JSON
 # 初始化问答引擎
 logger.info("正在初始化问答引擎...")
 import os
-kg_path = os.path.join(os.path.dirname(__file__), 'liver_kg.json')
+kg_path = os.path.join(os.path.dirname(__file__), 'liver_kg.json')  # 使用肝病知识库
+# 如果要使用其他知识库，修改上面这行，例如：
+# kg_path = os.path.join(os.path.dirname(__file__), 'heart_disease_kg.json')  # 使用心脏病知识库
 qa_engine = QAEngine(kg_path, use_bert_model=True)
 
 # 检查实际使用的模型
@@ -78,47 +80,6 @@ def ask():
         return jsonify({
             'success': False,
             'error': f'服务器错误: {str(e)}'
-        }), 500
-
-
-@app.route('/api/diseases', methods=['GET'])
-def get_diseases():
-    """获取所有支持的疾病列表"""
-    try:
-        diseases = qa_engine.kb.get_all_diseases()
-        return jsonify({
-            'success': True,
-            'diseases': diseases
-        })
-    except Exception as e:
-        logger.error(f"获取疾病列表时出错: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-
-@app.route('/api/search', methods=['GET'])
-def search():
-    """关键词搜索"""
-    try:
-        keyword = request.args.get('keyword', '').strip()
-        if not keyword:
-            return jsonify({
-                'success': False,
-                'error': '请提供搜索关键词'
-            }), 400
-        
-        results = qa_engine.kb.search_by_keyword(keyword)
-        return jsonify({
-            'success': True,
-            'results': results
-        })
-    except Exception as e:
-        logger.error(f"搜索时出错: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
         }), 500
 
 
