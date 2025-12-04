@@ -278,3 +278,4 @@ if __name__ == "__main__":
     
     print(f"'{text1}' vs '{text2}': {sim12:.3f}")
     print(f"'{text1}' vs '{text3}': {sim13:.3f}")
+    print("test")
